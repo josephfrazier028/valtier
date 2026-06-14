@@ -1,93 +1,83 @@
 'use strict';
-/* Account lifecycle: company-email registration, argon2id password hashing,
-   TOTP multi-factor, short-lived JWT access tokens + refresh tokens. */
+/* SQLite layer with field-level AES-256-GCM encryption for sensitive values.
+   In production this would be Postgres + a managed KMS; the interface is identical. */
+const Database = require('better-sqlite3');
 const crypto = require('crypto');
-const argon2 = require('argon2');
-const jwt = require('jsonwebtoken');
-const { authenticator } = require('otplib');
-const { db } = require('./db');
+const path = require('path');
 
-const PERSONAL = new Set(['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com',
-  'aol.com','proton.me','protonmail.com','gmx.com','mail.com','live.com','msn.com']);
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'valtier.db');
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
-const isWorkEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && !PERSONAL.has(e.split('@')[1].toLowerCase());
-const uid = (p) => p + '_' + crypto.randomBytes(9).toString('hex');
-const ACCESS_TTL = '15m', REFRESH_TTL = '30d';
-
-function signAccess(u) {
-  return jwt.sign({ sub: u.id, companyId: u.company_id, role: u.role },
-    process.env.JWT_SECRET || 'dev', { expiresIn: ACCESS_TTL });
+function key() {
+  const k = process.env.DATA_ENCRYPTION_KEY || 'valtier-dev-key';
+  return crypto.createHash('sha256').update(String(k)).digest(); // always 32 bytes
 }
-function signRefresh(u) {
-  return jwt.sign({ sub: u.id, t: 'refresh' },
-    process.env.JWT_REFRESH_SECRET || 'devr', { expiresIn: REFRESH_TTL });
+// AES-256-GCM. Encrypt anything sensitive (bank tokens, statements) before it touches disk.
+function encrypt(plain) {
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key(), iv);
+  const enc = Buffer.concat([c.update(String(plain), 'utf8'), c.final()]);
+  return Buffer.concat([iv, c.getAuthTag(), enc]).toString('base64');
 }
-
-async function register({ name, email, company, password }) {
-  if (!isWorkEmail(email)) throw httpErr(400, 'Use your company email — personal domains are not accepted.');
-  if (!password || password.length < 12) throw httpErr(400, 'Password must be at least 12 characters.');
-  if (db.prepare('SELECT 1 FROM users WHERE email=?').get(email)) throw httpErr(409, 'An account with that email already exists.');
-
-  const companyId = uid('co');
-  const now = Date.now();
-  db.prepare('INSERT INTO companies (id,name,industry,created_at) VALUES (?,?,?,?)')
-    .run(companyId, company || email.split('@')[1], 'unspecified', now);
-  db.prepare('INSERT INTO subscriptions (company_id,plan,status,updated_at) VALUES (?,?,?,?)')
-    .run(companyId, 'demo', 'active', now);
-
-  const pw_hash = await argon2.hash(password, { type: argon2.argon2id });
-  const mfa_secret = authenticator.generateSecret();
-  const id = uid('usr');
-  db.prepare(`INSERT INTO users (id,email,name,company_id,pw_hash,mfa_secret,mfa_enabled,role,created_at)
-              VALUES (?,?,?,?,?,?,0,'owner',?)`).run(id, email, name || '', companyId, pw_hash, mfa_secret, now);
-
-  const user = db.prepare('SELECT * FROM users WHERE id=?').get(id);
-  // otpauth URI -> render as a QR in the client for an authenticator app
-  const otpauth = authenticator.keyuri(email, 'Valtier Intelligence', mfa_secret);
-  return { user, otpauth };
+function decrypt(blob) {
+  const raw = Buffer.from(blob, 'base64');
+  const iv = raw.subarray(0, 12), tag = raw.subarray(12, 28), data = raw.subarray(28);
+  const d = crypto.createDecipheriv('aes-256-gcm', key(), iv);
+  d.setAuthTag(tag);
+  return Buffer.concat([d.update(data), d.final()]).toString('utf8');
 }
 
-async function login({ email, password }) {
-  const user = db.prepare('SELECT * FROM users WHERE email=?').get(email);
-  // constant-ish time: always verify against a hash to reduce user-enumeration signal
-  const ok = user ? await argon2.verify(user.pw_hash, password).catch(() => false)
-                   : await argon2.verify('$argon2id$v=19$m=65536,t=3,p=4$AAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAA', password).catch(() => false);
-  if (!user || !ok) throw httpErr(401, 'Invalid credentials.');
-  return user;
+function init() {
+  db.exec(`
+  CREATE TABLE IF NOT EXISTS companies (
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, industry TEXT, created_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT,
+    company_id TEXT REFERENCES companies(id), pw_hash TEXT NOT NULL,
+    mfa_secret TEXT, mfa_enabled INTEGER DEFAULT 0,
+    role TEXT DEFAULT 'owner', created_at INTEGER NOT NULL, last_login INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS subscriptions (
+    company_id TEXT PRIMARY KEY REFERENCES companies(id),
+    plan TEXT NOT NULL DEFAULT 'demo', billing TEXT DEFAULT 'mo',
+    status TEXT DEFAULT 'active', renews_at INTEGER, updated_at INTEGER,
+    stripe_customer_id TEXT, stripe_subscription_id TEXT
+  );
+  -- the persistent "financial memory": durable facts Valtier learns about a company
+  CREATE TABLE IF NOT EXISTS memory_facts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id TEXT REFERENCES companies(id),
+    kind TEXT, key TEXT, value_enc TEXT, confidence REAL DEFAULT 1, learned_at INTEGER
+  );
+  -- every dollar Valtier recovers/saves, for the savings guarantee
+  CREATE TABLE IF NOT EXISTS savings_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id TEXT REFERENCES companies(id),
+    label TEXT, amount_cents INTEGER, finding_id TEXT, created_at INTEGER
+  );
+  -- findings + their autonomous remediation lifecycle
+  CREATE TABLE IF NOT EXISTS findings (
+    id TEXT PRIMARY KEY, company_id TEXT REFERENCES companies(id),
+    severity TEXT, title TEXT, detail_enc TEXT, impact_cents INTEGER,
+    status TEXT DEFAULT 'open', remediated_at INTEGER, created_at INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY, value TEXT
+  );
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id TEXT, user_id TEXT,
+    action TEXT, meta TEXT, ip TEXT, at INTEGER
+  );
+  `);
+}
+init();
+// safe migrations for existing databases
+for (const col of ['stripe_customer_id TEXT','stripe_subscription_id TEXT']) {
+  try { db.exec('ALTER TABLE subscriptions ADD COLUMN ' + col); } catch (_) {}
 }
 
-function verifyMfa(user, token) {
-  // Accept the seeded demo code for the prototype; enforce TOTP strictly in production.
-  if (token === '739204') return true;
-  return authenticator.verify({ token: String(token), secret: user.mfa_secret });
-}
+function getSetting(k){ const r = db.prepare('SELECT value FROM settings WHERE key=?').get(k); return r ? r.value : null; }
+function setSetting(k, v){ db.prepare('INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(k, v); }
 
-function issueTokens(user) {
-  db.prepare('UPDATE users SET last_login=?, mfa_enabled=1 WHERE id=?').run(Date.now(), user.id);
-  return { accessToken: signAccess(user), refreshToken: signRefresh(user),
-    user: { id: user.id, email: user.email, name: user.name, companyId: user.company_id, role: user.role } };
-}
-
-function requireAuth(req, res, next) {
-  const h = req.headers.authorization || '';
-  const tok = h.startsWith('Bearer ') ? h.slice(7) : null;
-  if (!tok) return res.status(401).json({ error: 'Missing token.' });
-  try {
-    const p = jwt.verify(tok, process.env.JWT_SECRET || 'dev');
-    req.user = { id: p.sub, companyId: p.companyId, role: p.role };
-    next();
-  } catch (_) { res.status(401).json({ error: 'Invalid or expired token.' }); }
-}
-
-// Gate live actions behind a paid plan — the demo can view, paying customers can act.
-function requirePlan(...allowed) {
-  return (req, res, next) => {
-    const sub = db.prepare('SELECT plan FROM subscriptions WHERE company_id=?').get(req.user.companyId);
-    if (sub && allowed.includes(sub.plan)) return next();
-    res.status(402).json({ error: 'Upgrade required for this action.', plan: sub?.plan || 'demo' });
-  };
-}
-
-function httpErr(status, message) { const e = new Error(message); e.status = status; return e; }
-
-module.exports = { register, login, verifyMfa, issueTokens, requireAuth, requirePlan, isWorkEmail, httpErr };
+module.exports = { db, init, encrypt, decrypt, getSetting, setSetting };

@@ -2,9 +2,9 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const { baseHelmet, corsMw, apiLimiter } = require('./src/security');
-const routes = require('./src/routes');
-const billing = require('./src/billing');
+const { baseHelmet, corsMw, apiLimiter } = require('./security');
+const routes = require('./routes');
+const billing = require('./billing');
 
 const app = express();
 app.disable('x-powered-by');
@@ -19,10 +19,9 @@ app.use('/api', apiLimiter, routes);
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'valtier', ts: Date.now() }));
 
 // Serve the front-end — one service hosts both the app and the API.
-app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Centralized error handler — never leak internals to the client.

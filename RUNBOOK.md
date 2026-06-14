@@ -13,7 +13,7 @@ You'll create three free accounts: **GitHub** (to hold the code), **Render** (to
 ## The whole thing, start to finish
 
 ### 1. Put the code on GitHub
-Create a free GitHub account, make a new repository, and upload the contents of this `valtier-backend` folder to it. (GitHub's web uploader works — drag the files in.)
+Create a free GitHub account and a new repository. Unzip this download, open the `valtier-backend` folder, select **all the files inside it**, and drag them onto GitHub's **Add file → Upload files** page. There are **no sub-folders** — it's all flat files — so they upload cleanly. Make sure files like `server.js`, `security.js`, `routes.js`, `db.js`, `auth.js`, `billing.js`, `render.yaml`, and `index.html` all appear at the top level of your repo, then **Commit**.
 
 ### 2. Get your Stripe key
 1. Create a Stripe account; switch on **Test mode** (toggle, top-right) so you can test for free.
@@ -70,10 +70,10 @@ Just want the demo online to show people? Drag the standalone `index.html` onto 
 **Next build:** true one-click "Connect Square" sync needs each provider's developer approval + OAuth (keys issued to you; a developer wires the sync). The connector tiles and backend hooks are already in place.
 
 ## Where things live
-- Payments + auto-catalog: `src/billing.js`
-- Accounts / auth / MFA: `src/auth.js`
-- API routes (incl. AI proxy `/api/ask`): `src/routes.js`
-- Security middleware: `src/security.js`
-- Data + encryption + settings: `src/db.js`
-- The app the customer sees: `public/index.html` (bundled; live mode on)
+- Payments + auto-catalog: `billing.js`
+- Accounts / auth / MFA: `auth.js`
+- API routes (incl. AI proxy `/api/ask`): `routes.js`
+- Security middleware: `security.js`
+- Data + encryption + settings: `db.js`
+- The app the customer sees: `index.html` (bundled; live mode on)
 - Deploy config: `render.yaml`

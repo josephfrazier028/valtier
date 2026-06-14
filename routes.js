@@ -1,139 +1,114 @@
 'use strict';
-/* Real subscription billing via Stripe.
-   The product catalog (3 plans x monthly/annual) is created automatically in YOUR
-   Stripe account the first time it's needed and cached — so you never copy a price ID.
-   Without STRIPE_SECRET_KEY this no-ops so the API still boots in development. */
-const { db, getSetting, setSetting } = require('./db');
+const express = require('express');
+const crypto = require('crypto');
+const { db, encrypt, decrypt } = require('./db');
+const { register, login, verifyMfa, issueTokens, requireAuth, requirePlan } = require('./auth');
+const { authLimiter, apiLimiter, logAudit } = require('./security');
+const billing = require('./billing');
 
-let stripe = null;
-function getStripe() {
-  if (stripe) return stripe;
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return null;
-  stripe = require('stripe')(key);
-  return stripe;
-}
+const router = express.Router();
+const PLAN_PRICES = { foundation: { mo: 40000, yr: 400000 }, command: { mo: 120000, yr: 1200000 }, sovereign: { mo: 250000, yr: 1600000 } };
 
-const PLAN_AMOUNTS = {
-  foundation: { name: 'Valtier Foundation', mo: 40000, yr: 400000 },
-  command:    { name: 'Valtier Command',    mo: 120000, yr: 1200000 },
-  sovereign:  { name: 'Valtier Sovereign',  mo: 250000, yr: 1600000 },
-};
+/* ---------- AUTH ---------- */
+router.post('/auth/register', authLimiter, async (req, res, next) => {
+  try { const { user, otpauth } = await register(req.body || {});
+    res.json({ ok: true, userId: user.id, mfaSetup: otpauth, next: 'mfa' });
+  } catch (e) { next(e); }
+});
+router.post('/auth/login', authLimiter, async (req, res, next) => {
+  try { const user = await login(req.body || {}); res.json({ ok: true, userId: user.id, next: 'mfa' }); }
+  catch (e) { next(e); }
+});
+router.post('/auth/mfa', authLimiter, (req, res) => {
+  const { userId, code } = req.body || {};
+  const user = db.prepare('SELECT * FROM users WHERE id=?').get(userId);
+  if (!user) return res.status(404).json({ error: 'Unknown user.' });
+  if (!verifyMfa(user, code)) return res.status(401).json({ error: 'Invalid verification code.' });
+  res.json({ ok: true, ...issueTokens(user) });
+});
 
-function lkey(plan, b) { return 'valtier_' + plan + '_' + b; }
-async function ensureCatalog() {
-  const s = getStripe();
-  if (!s) throw httpErr(503, 'Billing is not configured yet.');
-  // discover existing prices by stable lookup_key, so we never create duplicates
-  const keys = [];
-  for (const plan of Object.keys(PLAN_AMOUNTS)) for (const b of ['mo', 'yr']) keys.push(lkey(plan, b));
-  const found = {};
+/* ---------- SUBSCRIPTION ---------- */
+router.get('/subscription', requireAuth, (req, res) => {
+  res.json(db.prepare('SELECT plan,billing,status,renews_at FROM subscriptions WHERE company_id=?').get(req.user.companyId) || { plan: 'demo' });
+});
+router.post('/subscription', requireAuth, (req, res) => {
+  const { plan, billing = 'mo' } = req.body || {};
+  if (!PLAN_PRICES[plan]) return res.status(400).json({ error: 'Unknown plan.' });
+  // In production: create a Stripe Checkout session here and activate on webhook confirmation.
+  const renews = Date.now() + (billing === 'yr' ? 365 : 30) * 864e5;
+  db.prepare('UPDATE subscriptions SET plan=?,billing=?,status=?,renews_at=?,updated_at=? WHERE company_id=?')
+    .run(plan, billing, 'active', renews, Date.now(), req.user.companyId);
+  logAudit(req, 'subscription.activate', { plan, billing, price_cents: PLAN_PRICES[plan][billing] });
+  res.json({ ok: true, plan, billing, renews_at: renews, price_cents: PLAN_PRICES[plan][billing] });
+});
+
+/* ---------- BILLING (Stripe) ---------- */
+router.post('/billing/checkout', requireAuth, billing.createCheckout);
+router.get('/billing/portal', requireAuth, billing.createPortal);
+
+/* ---------- FINANCIAL MEMORY ---------- */
+router.get('/memory', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT kind,key,value_enc,confidence,learned_at FROM memory_facts WHERE company_id=? ORDER BY learned_at DESC').all(req.user.companyId);
+  res.json(rows.map(r => ({ kind: r.kind, key: r.key, value: decrypt(r.value_enc), confidence: r.confidence, learnedAt: r.learned_at })));
+});
+router.post('/memory', requireAuth, (req, res) => {
+  const { kind, key, value, confidence = 1 } = req.body || {};
+  db.prepare('INSERT INTO memory_facts (company_id,kind,key,value_enc,confidence,learned_at) VALUES (?,?,?,?,?,?)')
+    .run(req.user.companyId, kind || 'fact', key || '', encrypt(value ?? ''), confidence, Date.now());
+  res.json({ ok: true });
+});
+
+/* ---------- SAVINGS LEDGER (the guarantee) ---------- */
+router.get('/savings', requireAuth, (req, res) => {
+  const total = db.prepare('SELECT COALESCE(SUM(amount_cents),0) t FROM savings_ledger WHERE company_id=?').get(req.user.companyId).t;
+  const items = db.prepare('SELECT label,amount_cents,created_at FROM savings_ledger WHERE company_id=? ORDER BY created_at DESC LIMIT 100').all(req.user.companyId);
+  res.json({ totalCents: total, items });
+});
+
+/* ---------- FINDINGS + AUTONOMOUS REMEDIATION ---------- */
+router.get('/findings', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT id,severity,title,detail_enc,impact_cents,status,created_at FROM findings WHERE company_id=? ORDER BY created_at DESC').all(req.user.companyId);
+  res.json(rows.map(r => ({ id: r.id, severity: r.severity, title: r.title, detail: decrypt(r.detail_enc), impactCents: r.impact_cents, status: r.status, createdAt: r.created_at })));
+});
+// Valtier doesn't just flag — it acts. Demo can view; paid plans can execute.
+router.post('/findings/:id/remediate', requireAuth, requirePlan('command', 'sovereign'), (req, res) => {
+  const f = db.prepare('SELECT * FROM findings WHERE id=? AND company_id=?').get(req.params.id, req.user.companyId);
+  if (!f) return res.status(404).json({ error: 'Finding not found.' });
+  if (f.status === 'remediated') return res.json({ ok: true, alreadyDone: true });
+  const now = Date.now();
+  db.prepare("UPDATE findings SET status='remediated', remediated_at=? WHERE id=?").run(now, f.id);
+  if (f.impact_cents) db.prepare('INSERT INTO savings_ledger (company_id,label,amount_cents,finding_id,created_at) VALUES (?,?,?,?,?)')
+    .run(req.user.companyId, f.title, f.impact_cents, f.id, now);
+  logAudit(req, 'finding.remediate', { id: f.id, impact_cents: f.impact_cents });
+  // Production: enqueue the real action (post GL entry, send dispute, sweep cash) via the action executor.
+  res.json({ ok: true, id: f.id, status: 'remediated', bankedCents: f.impact_cents || 0 });
+});
+
+/* ---------- AI (server-side proxy; keeps your API key secret) ---------- */
+router.post('/ask', requireAuth, async (req, res, next) => {
   try {
-    const list = await s.prices.list({ lookup_keys: keys, active: true, limit: 100 });
-    list.data.forEach(p => { if (p.lookup_key) found[p.lookup_key] = p.id; });
-  } catch (_) {}
-  const catalog = {};
-  for (const plan of Object.keys(PLAN_AMOUNTS)) {
-    const a = PLAN_AMOUNTS[plan];
-    const moK = lkey(plan, 'mo'), yrK = lkey(plan, 'yr');
-    if (found[moK] && found[yrK]) { catalog[plan] = { mo: found[moK], yr: found[yrK] }; continue; }
-    const product = await s.products.create({ name: a.name, metadata: { plan } });
-    const mo = await s.prices.create({ product: product.id, unit_amount: a.mo, currency: 'usd', recurring: { interval: 'month' }, lookup_key: moK, transfer_lookup_key: true, metadata: { plan, billing: 'mo' } });
-    const yr = await s.prices.create({ product: product.id, unit_amount: a.yr, currency: 'usd', recurring: { interval: 'year' }, lookup_key: yrK, transfer_lookup_key: true, metadata: { plan, billing: 'yr' } });
-    catalog[plan] = { mo: mo.id, yr: yr.id };
-  }
-  setSetting('stripe_catalog', JSON.stringify(catalog));
-  return catalog;
-}
-
-function priceToPlan() {
-  const out = {};
-  let cat = {};
-  const cached = getSetting('stripe_catalog');
-  if (cached) { try { cat = JSON.parse(cached); } catch (_) {} }
-  for (const plan of Object.keys(cat))
-    for (const b of ['mo', 'yr']) if (cat[plan][b]) out[cat[plan][b]] = { plan, billing: b };
-  return out;
-}
-
-async function createCheckout(req, res, next) {
-  try {
-    const s = getStripe();
-    if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' });
-    const { plan, billing = 'mo' } = req.body || {};
-    if (!PLAN_AMOUNTS[plan]) return res.status(400).json({ error: 'Unknown plan.' });
-    const catalog = await ensureCatalog();
-    const price = catalog[plan] && catalog[plan][billing === 'yr' ? 'yr' : 'mo'];
-    if (!price) return res.status(500).json({ error: 'Price unavailable.' });
-
-    const sub = db.prepare('SELECT * FROM subscriptions WHERE company_id=?').get(req.user.companyId);
-    let customer = sub && sub.stripe_customer_id;
-    if (!customer) {
-      const c = await s.customers.create({ metadata: { companyId: req.user.companyId } });
-      customer = c.id;
-      db.prepare('UPDATE subscriptions SET stripe_customer_id=? WHERE company_id=?').run(customer, req.user.companyId);
-    }
-    const base = process.env.FRONTEND_URL || (req.protocol + '://' + req.get('host'));
-    const session = await s.checkout.sessions.create({
-      mode: 'subscription', customer,
-      line_items: [{ price, quantity: 1 }],
-      success_url: base + '/?billing=success',
-      cancel_url: base + '/?billing=cancel',
-      metadata: { companyId: req.user.companyId, plan, billing },
-      subscription_data: { metadata: { companyId: req.user.companyId } },
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) return res.status(503).json({ error: 'AI is not configured.' });
+    const { system, prompt } = req.body || {};
+    const up = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1024, system: String(system || ''),
+        messages: [{ role: 'user', content: String(prompt || '') }] }),
     });
-    res.json({ url: session.url });
+    const d = await up.json();
+    if (!up.ok) return res.status(502).json({ error: (d.error && d.error.message) || 'AI upstream error' });
+    res.json({ text: (d.content || []).map(b => (b && b.type === 'text' ? b.text : '')).join('').trim() });
   } catch (e) { next(e); }
-}
+});
 
-async function createPortal(req, res, next) {
-  try {
-    const s = getStripe();
-    if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' });
-    const sub = db.prepare('SELECT stripe_customer_id FROM subscriptions WHERE company_id=?').get(req.user.companyId);
-    if (!sub || !sub.stripe_customer_id) return res.status(400).json({ error: 'No billing account yet.' });
-    const base = process.env.FRONTEND_URL || (req.protocol + '://' + req.get('host'));
-    const portal = await s.billingPortal.sessions.create({ customer: sub.stripe_customer_id, return_url: base });
-    res.json({ url: portal.url });
-  } catch (e) { next(e); }
-}
+/* ---------- INGEST (documents / accounts) ---------- */
+router.post('/ingest', requireAuth, requirePlan('foundation', 'command', 'sovereign'), (req, res) => {
+  // Production: stream upload to object storage, run extraction + reconciliation pipeline.
+  const id = 'fnd_' + crypto.randomBytes(6).toString('hex');
+  db.prepare('INSERT INTO findings (id,company_id,severity,title,detail_enc,impact_cents,status,created_at) VALUES (?,?,?,?,?,?,?,?)')
+    .run(id, req.user.companyId, 'med', 'Document ingested', encrypt('Parsed and reconciled against the ledger.'), 0, 'open', Date.now());
+  res.json({ ok: true, findingId: id });
+});
 
-function applySubscription(stripeSub) {
-  const companyId = stripeSub.metadata && stripeSub.metadata.companyId;
-  if (!companyId) return;
-  const priceObj = stripeSub.items && stripeSub.items.data[0] && stripeSub.items.data[0].price;
-  let mapped = (priceObj && priceObj.metadata && priceObj.metadata.plan) ? { plan: priceObj.metadata.plan, billing: priceObj.metadata.billing } : {};
-  if (!mapped.plan) mapped = priceToPlan()[priceObj && priceObj.id] || {};
-  const active = ['active', 'trialing', 'past_due'].includes(stripeSub.status);
-  db.prepare('UPDATE subscriptions SET plan=?, billing=?, status=?, renews_at=?, stripe_subscription_id=?, updated_at=? WHERE company_id=?')
-    .run(active ? (mapped.plan || 'foundation') : 'demo', mapped.billing || 'mo', stripeSub.status,
-      (stripeSub.current_period_end || 0) * 1000, stripeSub.id, Date.now(), companyId);
-}
-
-function webhook(req, res) {
-  const s = getStripe();
-  if (!s) return res.status(503).end();
-  let event;
-  try {
-    event = s.webhooks.constructEvent(req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).send('Webhook signature verification failed.');
-  }
-  (async () => {
-    try {
-      if (event.type === 'checkout.session.completed') {
-        const full = await s.subscriptions.retrieve(event.data.object.subscription);
-        if (!full.metadata.companyId && event.data.object.metadata.companyId)
-          full.metadata.companyId = event.data.object.metadata.companyId;
-        applySubscription(full);
-      } else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
-        applySubscription(event.data.object);
-      }
-    } catch (_) {}
-  })();
-  res.json({ received: true });
-}
-
-function httpErr(status, message) { const e = new Error(message); e.status = status; return e; }
-
-module.exports = { createCheckout, createPortal, webhook, ensureCatalog };
+module.exports = router;
