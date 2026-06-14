@@ -18,6 +18,9 @@ app.use('/api', apiLimiter, routes);
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'valtier', ts: Date.now() }));
 
+// Social share image (Open Graph / Twitter cards) + favicon
+app.get('/og.png', (_req, res) => res.sendFile(path.join(__dirname, 'og.png')));
+
 // Serve the front-end — one service hosts both the app and the API.
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
