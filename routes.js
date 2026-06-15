@@ -5,6 +5,8 @@ const { db, encrypt, decrypt } = require('./db');
 const { register, login, verifyMfa, issueTokens, requireAuth, requirePlan } = require('./auth');
 const { authLimiter, apiLimiter, logAudit } = require('./security');
 const billing = require('./billing');
+const plaid = require('./plaid');
+const executor = require('./executor');
 
 const router = express.Router();
 const PLAN_PRICES = { foundation: { mo: 40000, yr: 400000 }, command: { mo: 120000, yr: 1200000 }, sovereign: { mo: 250000, yr: 1600000 } };
@@ -46,6 +48,21 @@ router.post('/subscription', requireAuth, (req, res) => {
 router.post('/billing/checkout', requireAuth, billing.createCheckout);
 router.get('/billing/portal', requireAuth, billing.createPortal);
 
+/* ---------- LIVE BANK CONNECTIONS (Plaid) ---------- */
+router.post('/plaid/link-token', requireAuth, plaid.createLinkToken);
+router.post('/plaid/exchange', requireAuth, plaid.exchangePublicToken);
+router.get('/plaid/links', requireAuth, plaid.listLinks);
+
+/* ---------- OUTCOME BILLING (pay a share of what we recover) ---------- */
+router.get('/recovery/summary', requireAuth, billing.recoverySummary);
+router.post('/recovery/invoice', requireAuth, requirePlan('foundation', 'command', 'sovereign'), billing.invoiceRecovery);
+
+/* ---------- ACTION EXECUTOR (approved recovery -> real, auditable action) ---------- */
+router.get('/actions', requireAuth, executor.listActions);
+router.post('/actions/:findingId/execute', requireAuth, requirePlan('foundation', 'command', 'sovereign'), executor.createAction);
+router.post('/actions/:id/confirm', requireAuth, requirePlan('foundation', 'command', 'sovereign'), executor.confirmAction);
+router.post('/actions/:id/dismiss', requireAuth, requirePlan('foundation', 'command', 'sovereign'), executor.dismissAction);
+
 /* ---------- FINANCIAL MEMORY ---------- */
 router.get('/memory', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT kind,key,value_enc,confidence,learned_at FROM memory_facts WHERE company_id=? ORDER BY learned_at DESC').all(req.user.companyId);
@@ -69,6 +86,19 @@ router.get('/savings', requireAuth, (req, res) => {
 router.get('/findings', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT id,severity,title,detail_enc,impact_cents,status,created_at FROM findings WHERE company_id=? ORDER BY created_at DESC').all(req.user.companyId);
   res.json(rows.map(r => ({ id: r.id, severity: r.severity, title: r.title, detail: decrypt(r.detail_enc), impactCents: r.impact_cents, status: r.status, createdAt: r.created_at })));
+});
+// Bulk-ingest the in-browser analysis findings so each gets a server id the executor can act on.
+router.post('/findings/ingest', requireAuth, requirePlan('foundation', 'command', 'sovereign'), (req, res) => {
+  const items = Array.isArray(req.body && req.body.findings) ? req.body.findings : [];
+  const ins = db.prepare('INSERT INTO findings (id,company_id,severity,title,detail_enc,impact_cents,status,created_at) VALUES (?,?,?,?,?,?,?,?)');
+  const out = []; const now = Date.now();
+  for (const f of items.slice(0, 100)) {
+    const id = 'fnd_' + crypto.randomBytes(6).toString('hex');
+    ins.run(id, req.user.companyId, String(f.severity || 'med').slice(0, 12), String(f.title || 'Finding').slice(0, 200), encrypt(String(f.detail || '')), Math.round(f.impactCents || 0), 'open', now);
+    out.push({ id, title: f.title, impactCents: Math.round(f.impactCents || 0) });
+  }
+  logAudit(req, 'findings.ingest', { count: out.length });
+  res.json({ ok: true, findings: out });
 });
 // Valtier doesn't just flag — it acts. Demo can view; paid plans can execute.
 router.post('/findings/:id/remediate', requireAuth, requirePlan('command', 'sovereign'), (req, res) => {

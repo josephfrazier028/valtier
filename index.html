@@ -837,6 +837,58 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:none;border-ra
 .lp-foot-links a{color:var(--gold-bright);text-decoration:none;font-family:var(--sans);letter-spacing:.02em}
 .lp-foot-links a:hover{text-decoration:underline}
 
+/* ===== STAGE-1 RECOVERY LAYER ===== */
+.recov-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px;padding:18px 22px;border:1px solid var(--gold-deep);border-radius:8px;background:linear-gradient(135deg,rgba(201,145,47,.10),rgba(61,165,255,.05))}
+.recov-banner .rb-k{font-family:var(--disp);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-bright);margin-bottom:6px}
+.recov-banner .rb-t{font-family:var(--disp);font-size:19px;color:#fff;font-weight:700;line-height:1.2}
+.recov-banner .rb-t b{color:var(--gold-bright)}
+.recov-banner .rb-s{font-size:12px;color:var(--muted);line-height:1.55;margin-top:6px;max-width:64ch}
+.recov-banner .rb-r{text-align:right;flex:none}
+.recov-banner .rb-amt{font-family:var(--disp);font-size:30px;font-weight:800;color:var(--gold-bright);line-height:1}
+.recov-banner .rb-lab{font-size:10px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+@media(max-width:640px){.recov-banner{flex-direction:column;align-items:flex-start}.recov-banner .rb-r{text-align:left}}
+
+/* currency selector */
+.cur-sel{background:var(--graphite,#15171c);color:var(--silver);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:10px;padding:3px 6px;margin-left:12px;cursor:pointer;vertical-align:middle}
+.cur-sel:hover{border-color:var(--gold-deep)}
+
+/* recovery dashboard + live connect */
+.recov-dash{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.recov-dash .rd-stat{padding:16px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.015)}
+.recov-dash .rd-stat .l{font-size:11px;color:var(--muted);margin-bottom:6px}
+.recov-dash .rd-stat .v{font-family:var(--disp);font-size:24px;font-weight:800;color:#fff}
+.recov-dash .rd-stat .v.gold{color:var(--gold-bright)}
+.recov-dash .rd-stat .v.pos{color:var(--pos)}
+.rd-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap}
+.rd-foot span{font-size:12px;color:var(--faint)}
+.connect-live{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:14px 16px;border:1px solid var(--volt-deep);border-radius:6px;background:rgba(61,165,255,.05);flex-wrap:wrap}
+.connect-live .cl-t{font-size:12.5px;color:var(--silver);max-width:60ch}
+@media(max-width:640px){.recov-dash{grid-template-columns:1fr}}
+
+/* executor staging card */
+.rx-stage{margin-top:12px;padding:14px;border:1px solid var(--gold-deep);border-radius:6px;background:rgba(201,145,47,.05)}
+.rx-stage .rx-sum{font-family:var(--disp);font-size:13px;color:#fff;font-weight:600;margin-bottom:8px}
+.rx-steps{margin:0 0 10px 18px;padding:0;color:var(--muted);font-size:12px;line-height:1.7}
+.rx-art{border:1px solid var(--line);border-radius:5px;background:rgba(0,0,0,.25);padding:10px 12px;margin-bottom:10px}
+.rx-art .rx-art-h{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-bright);margin-bottom:6px}
+.rx-art pre{white-space:pre-wrap;font-family:var(--mono);font-size:11.5px;color:var(--silver);margin:0;line-height:1.55}
+.rx-act{display:flex;gap:8px}
+.rx-done{font-size:12.5px;color:var(--pos);font-weight:600}
+
+/* recovery history audit trail */
+.rx-hist{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.rx-hist .rh-h{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.rh-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.rh-row:last-child{border-bottom:none}
+.rh-st{font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;font-weight:700;flex:none}
+.rh-st.executed{background:rgba(58,178,113,.14);color:var(--pos)}
+.rh-st.awaiting_confirmation{background:rgba(201,145,47,.14);color:var(--gold-bright)}
+.rh-st.dismissed{background:rgba(255,255,255,.06);color:var(--faint)}
+.rh-sum{flex:1;font-size:12.5px;color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rh-amt{font-family:var(--disp);font-size:13px;font-weight:700;color:#fff;flex:none}
+.rh-date{font-size:10.5px;color:var(--faint);flex:none;min-width:74px;text-align:right}
+.rx-hist .rh-empty{font-size:12px;color:var(--faint);padding:6px 0}
+
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='14' fill='%23050506'/%3E%3Cpath d='M28 26 L50 78 L72 26' fill='none' stroke='%23e7c25a' stroke-width='11' stroke-linejoin='miter'/%3E%3Cpath d='M28 26 L50 78 L72 26' fill='none' stroke='%233da5ff' stroke-width='3.5'/%3E%3C/svg%3E">
 </head>
@@ -1357,6 +1409,18 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:none;border-ra
     <!-- ===== CONNECTIONS ===== -->
     <section class="view" id="view-connections">
       <div class="vhead"><div><h1>Data <b>Connections</b></h1><div class="sub">Connect once. Valtier ingests, normalizes and reconciles everything — forever.</div></div></div>
+      <div class="panel" id="recovPanel" style="margin-bottom:16px">
+        <div class="phead"><h3>Recovery &amp; billing</h3><span class="meta">Subscription &middot; plus a 8% commission on what I recover</span></div>
+        <div style="padding:16px">
+          <div class="recov-dash">
+            <div class="rd-stat"><div class="l">Recovered for you</div><div class="v" id="rdRecovered">$0</div></div>
+            <div class="rd-stat"><div class="l">My commission (8%)</div><div class="v gold" id="rdFee">$0</div></div>
+            <div class="rd-stat"><div class="l">Net in your pocket</div><div class="v pos" id="rdNet">$0</div></div>
+          </div>
+          <div class="rd-foot"><span>Your subscription covers the work &mdash; I take a 8% commission only on what I recover.</span><button class="btn gold" id="rdSettle">Settle my commission</button></div>
+          <div class="rx-hist" id="rxHist"></div>
+        </div>
+      </div>
       <div class="panel" style="margin-bottom:16px">
         <div class="phead"><h3>Upload anything</h3><span class="meta">Bank · accounting · POS · inventory exports</span></div>
         <div style="padding:16px">
@@ -1365,6 +1429,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:none;border-ra
             <h4>Drop a CSV — transactions, POS sales, or inventory</h4>
             <p>Export from your bank, accounting, POS or inventory system. I detect the type, analyze it live, and act on what I find.</p>
           </div>
+          <div class="connect-live"><div class="cl-t">Prefer live sync? Connect your bank and I'll watch every transaction automatically &mdash; in any currency.</div><button class="btn gold" id="connectBankBtn">Connect a bank &middot; live</button></div>
           <div class="up-note">Valtier runs on whatever you have — your <b>bank, accounting, or POS</b> data is enough to start. <b>Inventory is recommended</b> for product &amp; retail businesses to unlock stock and margin analysis, but it's never required.</div>
           <div class="pipeline" id="pipeline">
             <div class="pl-file" id="plFile"></div>
@@ -1546,7 +1611,7 @@ const REPORTS = [
 /* ============ STATE ============ */
 const state={co:"meridian",scenario:"base",growth:22,rate:48};
 const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
-const fmtMoney=n=>{const a=Math.abs(n);if(a>=1e6)return (n<0?'−':'')+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e3)return (n<0?'−':'')+'$'+(a/1e3).toFixed(0)+'K';return (n<0?'−':'')+'$'+a.toFixed(0);};
+const fmtMoney=n=>{const a=Math.abs(n);const s=(typeof vsym==='function'?vsym():'$');if(a>=1e6)return (n<0?'\u2212':'')+s+(a/1e6).toFixed(1)+'M';if(a>=1e3)return (n<0?'\u2212':'')+s+(a/1e3).toFixed(0)+'K';return (n<0?'\u2212':'')+s+a.toFixed(0);};
 
 /* ============ DIAL ============ */
 function buildDial(score){
@@ -2149,6 +2214,94 @@ async function api(path,opts){
   return data;
 }
 function isDemo(){const s=MEM.session();return !s||s.plan==="demo";}
+var VRECOVERY_PCT=0.08;
+function loadPlaid(cb){if(window.Plaid){cb();return;}var s=document.createElement('script');s.src='https://cdn.plaid.com/link/v2/stable/link-initialize.js';s.onload=cb;s.onerror=function(){toast('Couldn\u2019t load the bank connector.');};document.head.appendChild(s);}
+async function connectBank(){
+  if(isDemo()){openPaywall();return;}
+  if(!liveMode()){toast('Live bank sync runs on your deployed site.');return;}
+  let r;try{r=await api('/plaid/link-token',{method:'POST'});}catch(e){toast(e.message||'Live bank sync isn\u2019t switched on yet.');return;}
+  if(!r||!r.linkToken){toast('Live bank sync isn\u2019t switched on yet.');return;}
+  loadPlaid(function(){
+    try{
+      var handler=Plaid.create({token:r.linkToken,
+        onSuccess:async function(pt,meta){
+          var nm=(meta&&meta.institution&&meta.institution.name)||'your bank';
+          try{await api('/plaid/exchange',{method:'POST',body:{publicToken:pt,institution:nm,currency:VCUR.code}});
+            toast('Connected '+nm+'. I\u2019m syncing transactions now.');
+            if(typeof addOp==='function')addOp('flag','Connected <b>'+esc(nm)+'</b> \u2014 live sync on, watching every transaction.','Connect');
+          }catch(e){toast('Connected, but setup hit a snag: '+(e.message||''));}
+        },
+        onExit:function(){}});
+      handler.open();
+    }catch(e){toast('Couldn\u2019t open the bank connector.');}
+  });
+}
+async function settleShare(){
+  if(isDemo()){openPaywall();return;}
+  if(!liveMode()){toast('Billing runs on your deployed site.');return;}
+  try{var r=await api('/recovery/invoice',{method:'POST',body:{currency:VCUR.code}});
+    if(r&&r.nothingToBill){toast('Nothing to settle yet \u2014 I bill only after I\u2019ve recovered money.');return;}
+    toast('Settled '+money((r.feeCents||0)/100)+' \u2014 my 8% commission on '+money((r.recoveredCents||0)/100)+' recovered'+(r.live?'':' (test mode)')+'.');
+    renderRecovery();
+  }catch(e){toast(e.message||'Couldn\u2019t process that right now.');}
+}
+function renderRecovery(){
+  var panel=document.getElementById('recovPanel');if(!panel)return;
+  function setVals(recCents,feeCents){var rec=recCents/100,fee=feeCents/100;var a=document.getElementById('rdRecovered'),b=document.getElementById('rdFee'),c=document.getElementById('rdNet');if(a)a.textContent=money(rec);if(b)b.textContent=money(fee);if(c)c.textContent=money(Math.max(0,rec-fee));}
+  if(liveMode()&&!isDemo()){
+    api('/recovery/summary').then(function(s){setVals(s.recoveredCents||0,(s.feeDueCents!=null?s.feeDueCents:Math.round((s.recoveredCents||0)*VRECOVERY_PCT)));}).catch(function(){var co=MEM.company();var rec=(co.savings||0)*100;setVals(rec,Math.round(rec*VRECOVERY_PCT));});
+  } else {
+    var co=MEM.company();var rec=(co.savings||0)*100;setVals(rec,Math.round(rec*VRECOVERY_PCT));
+  }
+  renderActionHistory();
+}
+function fmtCents(cents,code){var sym=(code&&CURRENCIES[code]&&CURRENCIES[code].sym)||vsym();var a=Math.abs(cents||0)/100;if(a>=1e6)return sym+(a/1e6).toFixed(2)+'M';if(a>=1e3)return sym+(a/1e3).toFixed(1)+'K';return sym+Math.round(a);}
+function rhDate(t){try{return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});}catch(e){return '';}}
+function stLabel(s){return s==='awaiting_confirmation'?'Staged':(s==='executed'?'Recovered':(s==='dismissed'?'Dismissed':s));}
+function renderActionHistory(){
+  var box=document.getElementById('rxHist');if(!box)return;
+  function paint(rows){
+    if(!rows||!rows.length){box.innerHTML='<div class="rh-h">Recovery history</div><div class="rh-empty">No recoveries yet \u2014 upload your numbers and approve a recovery to start your audit trail.</div>';return;}
+    box.innerHTML='<div class="rh-h">Recovery history</div>'+rows.map(function(r){return '<div class="rh-row"><span class="rh-st '+esc(r.status)+'">'+esc(stLabel(r.status))+'</span><span class="rh-sum">'+esc(r.summary)+'</span><span class="rh-amt">'+fmtCents(r.amountCents,r.currency)+'</span><span class="rh-date">'+esc(rhDate(r.date))+'</span></div>';}).join('');
+  }
+  function paintDemo(){var co=MEM.company();var fixed=(co.fixed||[]).slice().reverse();paint(fixed.map(function(f){return {status:'executed',summary:f.label||'Recovery',amountCents:Math.round((f.amt||0)*100),currency:VCUR.code,date:f.t};}));}
+  if(liveMode()&&!isDemo()){
+    api('/actions').then(function(list){paint((list||[]).map(function(a){return {status:a.status,summary:a.summary||a.type||'Recovery',amountCents:a.amountCents||0,currency:a.currency,date:a.executedAt||a.createdAt};}));}).catch(paintDemo);
+  } else { paintDemo(); }
+}
+async function ingestFindings(findings){
+  if(!liveMode()||isDemo()||!findings||!findings.length)return;
+  try{
+    var payload=findings.map(function(f){return {severity:f.sev||'med',title:f.title||'',detail:f.desc||'',impactCents:f.impactCents||0};});
+    var r=await api('/findings/ingest',{method:'POST',body:{findings:payload}});
+    if(r&&r.findings){r.findings.forEach(function(sf,i){if(findings[i])findings[i].serverId=sf.id;});}
+  }catch(e){/* if ingest isn't available, approve falls back to the local flow */}
+}
+async function executeRecovery(finding,item){
+  if(!item||item.dataset.resolved)return;
+  if(!finding||!finding.serverId){runRemediation('fx',finding,item,((finding&&finding.impactCents)||0)/100);return;}
+  var actions=item.querySelector('.aq-actions');
+  if(actions)actions.innerHTML='<span style="color:var(--faint);font-size:12px">Preparing the recovery\u2026</span>';
+  var act;try{act=await api('/actions/'+finding.serverId+'/execute',{method:'POST',body:{currency:VCUR.code}});}
+  catch(e){toast(e.message||'Couldn\u2019t prepare that recovery.');if(actions)actions.innerHTML='';return;}
+  var a=(act&&act.action)||{};var art=a.artifact||{};
+  var stepsHtml=(a.steps||[]).map(function(s){return '<li>'+esc(s)+'</li>';}).join('');
+  var artHtml=art.body?'<div class="rx-art"><div class="rx-art-h">'+esc(art.subject||art.kind||'Prepared')+'</div><pre>'+esc(art.body)+'</pre></div>':'';
+  var body=item.querySelector('.aq-body');if(!body){if(actions)actions.innerHTML='';return;}
+  if(actions)actions.style.display='none';
+  var box=document.createElement('div');box.className='rx-stage';
+  box.innerHTML='<div class="rx-sum">'+esc(a.summary||'Recovery prepared')+'</div>'+(stepsHtml?'<ol class="rx-steps">'+stepsHtml+'</ol>':'')+artHtml+'<div class="rx-act"><button class="btn gold" data-rx-confirm>Confirm recovered</button><button class="btn" data-rx-dismiss>Not now</button></div>';
+  body.appendChild(box);
+  box.querySelector('[data-rx-confirm]').onclick=async function(){
+    box.querySelector('.rx-act').innerHTML='<span style="color:var(--faint);font-size:12px">Banking the recovery\u2026</span>';
+    try{var c=await api('/actions/'+a.id+'/confirm',{method:'POST'});item.dataset.resolved='1';
+      var banked=(c.bankedCents||0)/100;if(banked){MEM.addSaving(banked,a.summary||finding.title);bumpSaved(banked);updateChips();}
+      box.querySelector('.rx-act').outerHTML='<div class="rx-done">\u26a1 Recovered. '+money(banked)+' banked \u2014 my commission is just 8% of it.</div>';
+      toast('Recovery confirmed. '+money(banked)+' recovered.');
+    }catch(e){toast(e.message||'Couldn\u2019t confirm that.');var ra=box.querySelector('.rx-act');if(ra)ra.innerHTML='<button class="btn gold" data-rx-retry>Try again</button>';var rt=box.querySelector('[data-rx-retry]');if(rt)rt.onclick=function(){executeRecovery(finding,item);box.remove();};}
+  };
+  box.querySelector('[data-rx-dismiss]').onclick=async function(){try{await api('/actions/'+a.id+'/dismiss',{method:'POST'});}catch(e){}box.remove();if(actions){actions.style.display='';actions.innerHTML='<button class="btn gold" data-fx-go="">Recover</button>';var nb=actions.querySelector('[data-fx-go]');if(nb)nb.onclick=function(){executeRecovery(finding,item);};}renderRecovery();};
+}
 function curName(){const s=MEM.session();return (s&&s.name)?s.name.split(" ")[0]:"there";}
 
 /* ---- AUTH ---- */
@@ -2300,7 +2453,9 @@ function afterStart(){
 }
 function updateChips(){
   const c=MEM.company();
+  if(c.currency&&CURRENCIES[c.currency]&&VCUR.code!==c.currency){VCUR={code:c.currency,sym:CURRENCIES[c.currency].sym,locale:CURRENCIES[c.currency].locale};}
   const sv=$("#savingsVal");if(sv)sv.textContent=fmtMoney(c.savings||0);
+  if(typeof renderRecovery==='function')renderRecovery();
 }
 
 /* ---- REMEDIATION: Valtier executes the fix ---- */
@@ -2349,7 +2504,7 @@ const TUT=[
   {sel:"#feedToggle",title:"I never stop",body:"The lightning in my mark means the engine is live. This is my work, streaming in real time — day and night.",pre:()=>{$("#app").classList.add("feed-open");}},
   {sel:'.navbtn[data-view="forecast"]',title:"Forecasting that reads the economy",body:"My projections re-tune to interest rates, demand, and FX automatically. When the macro regime shifts, your forecast has already moved."},
   {sel:"#askFab",title:"Ask me anything",body:"Plain-English questions — runway, hiring, taxes, board prep. CFO-grade answers with every source cited."},
-  {sel:"#savingsChip",title:"Backed by a guarantee",body:"I track every dollar I save you here. If it doesn\u2019t exceed my fee for the year, that year is free."}
+  {sel:"#savingsChip",title:"Subscription + a 8% commission",body:"Recovery is part of your subscription. Every dollar I recover for you is tracked here \u2014 and my commission is just 8% of what I recover."}
 ];
 let tutN=0;
 function showTutorial(){tutN=0;$("#tutWelcome").style.display="";$("#tutor").classList.remove("steps");$("#tutor").classList.add("show");}
@@ -2397,7 +2552,7 @@ function wireV2(){
   const tb=document.querySelector(".topbar"), work=document.querySelector(".topbar .working");
   if(tb&&work&&!$("#savingsChip")){
     const chip=document.createElement("div");chip.className="savings-chip";chip.id="savingsChip";
-    chip.innerHTML=`<span class="sl">Saved</span><span class="sv" id="savingsVal">$0</span>`;
+    chip.innerHTML=`<span class="sl">Recovered</span><span class="sv" id="savingsVal">$0</span>`;
     tb.insertBefore(chip,work);
     const lock=document.createElement("button");lock.className="btn";lock.id="lockBtn";lock.textContent="Lock";lock.style.marginLeft="8px";
     lock.onclick=()=>$("#lockveil").classList.add("show");tb.insertBefore(lock,work);
@@ -2440,6 +2595,9 @@ function wireV2(){
   if($("#lpSignIn"))$("#lpSignIn").onclick=()=>toGate("signin");
   if($("#lpLearn"))$("#lpLearn").onclick=()=>{const t=document.getElementById("lpHow");if(t)t.scrollIntoView({behavior:"smooth"});};
   if($("#acBack"))$("#acBack").onclick=()=>{hideGate();showLanding();};
+  if($("#connectBankBtn"))$("#connectBankBtn").onclick=connectBank;
+  if($("#rdSettle"))$("#rdSettle").onclick=settleShare;
+  renderRecovery();
   ["mousemove","keydown","click","scroll"].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
   resetIdle();
 }
@@ -2518,7 +2676,14 @@ function normalize(rows,map){
   }
   return out;
 }
-function money(n){const a=Math.abs(n);if(a>=1e6)return '$'+(n/1e6).toFixed(2)+'M';if(a>=1e3)return '$'+(n/1e3).toFixed(1)+'K';return '$'+Math.round(n);}
+var CURRENCIES={USD:{sym:'$',locale:'en-US'},EUR:{sym:'\u20ac',locale:'de-DE'},GBP:{sym:'\u00a3',locale:'en-GB'},JPY:{sym:'\u00a5',locale:'ja-JP'},CNY:{sym:'CN\u00a5',locale:'zh-CN'},INR:{sym:'\u20b9',locale:'en-IN'},CAD:{sym:'C$',locale:'en-CA'},AUD:{sym:'A$',locale:'en-AU'},CHF:{sym:'CHF ',locale:'de-CH'},BRL:{sym:'R$',locale:'pt-BR'},MXN:{sym:'MX$',locale:'es-MX'},ZAR:{sym:'R',locale:'en-ZA'},NGN:{sym:'\u20a6',locale:'en-NG'},KES:{sym:'KSh ',locale:'en-KE'},AED:{sym:'AED ',locale:'ar-AE'},SAR:{sym:'SAR ',locale:'ar-SA'},SGD:{sym:'S$',locale:'en-SG'},HKD:{sym:'HK$',locale:'en-HK'},KRW:{sym:'\u20a9',locale:'ko-KR'},RUB:{sym:'\u20bd',locale:'ru-RU'},TRY:{sym:'\u20ba',locale:'tr-TR'},SEK:{sym:'kr ',locale:'sv-SE'},NOK:{sym:'kr ',locale:'nb-NO'},DKK:{sym:'kr ',locale:'da-DK'},PLN:{sym:'z\u0142 ',locale:'pl-PL'},NZD:{sym:'NZ$',locale:'en-NZ'},PHP:{sym:'\u20b1',locale:'en-PH'},THB:{sym:'\u0e3f',locale:'th-TH'},IDR:{sym:'Rp ',locale:'id-ID'},ILS:{sym:'\u20aa',locale:'he-IL'}};
+var VCUR={code:'USD',sym:'$',locale:'en-US'};
+var LAST_RENDER=null;
+function vsym(){return (VCUR&&VCUR.sym)||'$';}
+function setCurrency(code){if(!CURRENCIES[code])return;VCUR={code:code,sym:CURRENCIES[code].sym,locale:CURRENCIES[code].locale};try{const c=MEM.company();c.currency=code;MEM.saveCompany(c);}catch(e){}if(typeof updateChips==='function')updateChips();if(typeof LAST_RENDER==='function'&&LAST_RENDER)LAST_RENDER();}
+function detectCurrency(text){var t=String(text);var codes=Object.keys(CURRENCIES);for(var i=0;i<codes.length;i++){if(new RegExp('(^|[^A-Za-z])'+codes[i]+'([^A-Za-z]|$)').test(t))return codes[i];}var pairs=[['R$','BRL'],['A$','AUD'],['C$','CAD'],['S$','SGD'],['HK$','HKD'],['NZ$','NZD'],['MX$','MXN'],['CN\u00a5','CNY'],['\u20ac','EUR'],['\u00a3','GBP'],['\u20b9','INR'],['\u20a9','KRW'],['\u20bd','RUB'],['\u20ba','TRY'],['\u20a6','NGN'],['\u20b1','PHP'],['\u0e3f','THB'],['\u20aa','ILS'],['\u00a5','JPY'],['$','USD']];for(var j=0;j<pairs.length;j++){if(t.indexOf(pairs[j][0])>=0)return pairs[j][1];}return null;}
+function curSelectHTML(){return '<select id="curSel" class="cur-sel" onchange="setCurrency(this.value)" title="Currency">'+Object.keys(CURRENCIES).map(function(c){return '<option value="'+c+'"'+(c===VCUR.code?' selected':'')+'>'+c+' '+CURRENCIES[c].sym.trim()+'</option>';}).join('')+'</select>';}
+function money(n){const a=Math.abs(n);const s=vsym();if(a>=1e6)return s+(n/1e6).toFixed(2)+'M';if(a>=1e3)return s+(n/1e3).toFixed(1)+'K';return s+Math.round(n);}
 function mkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 
 function detectFindings(txns,months,vend){
@@ -2568,6 +2733,7 @@ function analyzeFile(f){
   rd.onload=()=>{
     let parsed;try{parsed=parseCSV(String(rd.result));}catch(e){toast('I couldn\u2019t parse that file \u2014 make sure it\u2019s a CSV.');return;}
     if(!parsed.rows.length){toast('That file had no data rows under the header.');return;}
+    try{const dc=detectCurrency(String(rd.result));if(dc)setCurrency(dc);}catch(e){}
     if(detectType(parsed.headers)==='inventory'){
       const inv=analyzeInventory(normalizeInventory(parsed.rows,mapInventory(parsed.headers)));
       if(!inv.skuCount){toast('I couldn\u2019t find inventory rows \u2014 include SKU/product, quantity, and cost or price.');return;}
@@ -2581,10 +2747,12 @@ function analyzeFile(f){
   rd.onerror=()=>toast('Could not read that file.');
   rd.readAsText(f);
 }
-function renderInventory(name,inv){
+function renderInventory(name,inv,quiet){
   const el=ensureAnalysisOut();
+  LAST_RENDER=function(){renderInventory(name,inv,true);};
   const topv=inv.topValue.map(v=>`<div class="vrow"><span class="vn">${esc(v.name)}</span><span class="vc">${v.qty}u</span><span class="vt">${money(v.val)}</span></div>`).join('');
   ANALYSIS_FINDINGS=inv.findings;
+  const rec=inv.findings.reduce((s,f)=>s+(f.impactCents||0),0)/100;
   const fnd=inv.findings.length?inv.findings.map((a,i)=>`
     <div class="aq-item" data-fx="${i}"><div class="aq-sev ${a.sev}"></div>
       <div class="aq-body"><div class="aq-tag">${a.tag}</div><div class="aq-title">${esc(a.title)}</div>
@@ -2593,33 +2761,37 @@ function renderInventory(name,inv){
     :`<div style="padding:18px;color:var(--muted);font-size:13px">Healthy inventory \u2014 no dead stock, overstock, or thin-margin items detected.</div>`;
   el.innerHTML=`
     <div class="panel" style="margin-bottom:16px">
-      <div class="phead"><h3>Inventory analysis \u00b7 ${esc(name)}</h3><span class="meta">${inv.skuCount} SKUs \u00b7 ${inv.totalUnits.toLocaleString()} units</span></div>
+      <div class="phead"><h3>Inventory analysis \u00b7 ${esc(name)}</h3><span class="meta">${inv.skuCount} SKUs \u00b7 ${inv.totalUnits.toLocaleString()} units${curSelectHTML()}</span></div>
       <div class="an-stats">
         <div class="an-s"><div class="l">Inventory value (cost)</div><div class="v" style="color:var(--gold-bright)">${money(inv.costValue)}</div></div>
         <div class="an-s"><div class="l">Retail value</div><div class="v" style="color:var(--pos)">${money(inv.retailValue)}</div></div>
         <div class="an-s"><div class="l">Avg margin</div><div class="v">${Math.round(inv.avgMargin*100)}%</div></div>
-        <div class="an-s"><div class="l">Issues found</div><div class="v" style="color:var(--gold-bright)">${inv.findings.length}</div></div>
+        <div class="an-s"><div class="l">Recoveries</div><div class="v" style="color:var(--gold-bright)">${inv.findings.length}</div></div>
       </div>
       <div class="an-cols">
         <div><div class="an-h">Most cash tied up</div><div class="vlist">${topv}</div></div>
         <div><div class="an-h">What this means</div><div style="font-size:12.5px;color:var(--muted);line-height:1.6">You\u2019re holding <b style="color:var(--silver)">${money(inv.costValue)}</b> in stock at cost. I watch it the way I watch cash \u2014 surfacing what\u2019s frozen, what\u2019s about to run out, and what\u2019s priced too low.</div></div>
       </div>
     </div>
-    <div class="panel"><div class="phead"><h3>What I found in your inventory</h3><span class="meta">I can act on these now</span></div>
+    ${rec>0?`<div class="recov-banner"><div class="rb-l"><div class="rb-k">&#9889; Autonomous Recovery</div><div class="rb-t">I can free up <b>${money(rec)}</b> from this inventory</div><div class="rb-s">Approve an action below and I execute it for you. Recovery is included in your subscription &mdash; when I recover or free up money, my commission is just 8% of it.</div></div><div class="rb-r"><div class="rb-amt">${money(rec)}</div><div class="rb-lab">recoverable now</div></div></div>`:''}
+    <div class="panel"><div class="phead"><h3>What I can recover &amp; free up</h3><span class="meta">Approve &amp; I handle it</span></div>
       <div style="padding:6px 14px 14px">${fnd}</div></div>`;
-  el.querySelectorAll('[data-fx-go]').forEach(b=>b.onclick=()=>{const i=+b.dataset.fxGo;runRemediation('iv'+i,ANALYSIS_FINDINGS[i],el.querySelector(`[data-fx="${i}"]`),(ANALYSIS_FINDINGS[i].impactCents||0)/100);});
+  el.querySelectorAll('[data-fx-go]').forEach(b=>b.onclick=()=>{const i=+b.dataset.fxGo;const f=ANALYSIS_FINDINGS[i];const card=el.querySelector(`[data-fx="${i}"]`);if(liveMode()&&!isDemo()&&f&&f.serverId){executeRecovery(f,card);}else{runRemediation('iv'+i,f,card,(f.impactCents||0)/100);}});
   const freeable=inv.findings.reduce((s,f)=>s+(f.impactCents||0),0)/100;
-  addOp('flag',`Analyzed inventory <b>${esc(name)}</b> \u2014 ${inv.skuCount} SKUs, ${money(inv.costValue)} on hand${freeable?`, <span class="amt">${money(freeable)}</span> freeable`:''}.`,'Inventory');
+  if(!quiet){addOp('flag',`Analyzed inventory <b>${esc(name)}</b> \u2014 ${inv.skuCount} SKUs, ${money(inv.costValue)} on hand${freeable?`, <span class="amt">${money(freeable)}</span> freeable`:''}.`,'Inventory');
   toast(`Inventory analyzed. ${inv.findings.length} thing${inv.findings.length===1?'':'s'} to act on.`);
-  el.scrollIntoView({behavior:'smooth',block:'start'});
+  ingestFindings(ANALYSIS_FINDINGS);
+  el.scrollIntoView({behavior:'smooth',block:'start'});}
 }
-function renderAnalysis(name,out){
+function renderAnalysis(name,out,quiet){
   const r=out.result, el=ensureAnalysisOut();
+  LAST_RENDER=function(){renderAnalysis(name,out,true);};
   const mkeys=Object.keys(r.months).sort();
   const maxNet=Math.max(1,...mkeys.map(k=>Math.abs(r.months[k].in-r.months[k].out)));
   const bars=mkeys.map(k=>{const v=r.months[k].in-r.months[k].out;const h=Math.max(3,Math.round(Math.abs(v)/maxNet*70));const pos=v>=0;return `<div class="mbar"><div class="mb-track"><i style="height:${h}px;background:${pos?'var(--pos)':'var(--neg)'};margin-top:${pos?70-h:70}px"></i></div><div class="mb-l">${k.slice(2)}</div><div class="mb-v" style="color:${pos?'var(--pos)':'var(--neg)'}">${pos?'+':'\u2212'}${money(Math.abs(v))}</div></div>`;}).join('');
   const vend=r.topVendors.map(v=>`<div class="vrow"><span class="vn">${esc(v.name)}</span><span class="vc">${v.count}\u00d7</span><span class="vt">${money(v.total)}</span></div>`).join('');
   ANALYSIS_FINDINGS=r.findings;
+  const rec=r.findings.reduce((s,f)=>s+(f.impactCents||0),0)/100;
   const fnd=r.findings.length?r.findings.map((a,i)=>`
     <div class="aq-item" data-fx="${i}"><div class="aq-sev ${a.sev}"></div>
       <div class="aq-body"><div class="aq-tag">${a.tag}</div><div class="aq-title">${esc(a.title)}</div>
@@ -2628,25 +2800,27 @@ function renderAnalysis(name,out){
     :`<div style="padding:18px;color:var(--muted);font-size:13px">Clean books \u2014 no duplicate payments, outliers, or spend spikes in this file. I\u2019ll keep watching as you add more.</div>`;
   el.innerHTML=`
     <div class="panel" style="margin-bottom:16px">
-      <div class="phead"><h3>Live analysis \u00b7 ${esc(name)}</h3><span class="meta">${r.count} transactions \u00b7 ${fmtRange(r.range)}</span></div>
+      <div class="phead"><h3>Live analysis \u00b7 ${esc(name)}</h3><span class="meta">${r.count} transactions \u00b7 ${fmtRange(r.range)}${curSelectHTML()}</span></div>
       <div class="an-stats">
         <div class="an-s"><div class="l">Money in</div><div class="v" style="color:var(--pos)">${money(r.inflow)}</div></div>
         <div class="an-s"><div class="l">Money out</div><div class="v" style="color:var(--neg)">${money(r.outflow)}</div></div>
         <div class="an-s"><div class="l">Net</div><div class="v" style="color:${r.net>=0?'var(--pos)':'var(--neg)'}">${r.net>=0?'+':'\u2212'}${money(Math.abs(r.net))}</div></div>
-        <div class="an-s"><div class="l">Issues found</div><div class="v" style="color:var(--gold-bright)">${r.findings.length}</div></div>
+        <div class="an-s"><div class="l">Recoveries</div><div class="v" style="color:var(--gold-bright)">${r.findings.length}</div></div>
       </div>
       <div class="an-cols">
         <div><div class="an-h">Monthly net</div><div class="mchart">${bars||'<span style="color:var(--faint);font-size:12px">No dated rows</span>'}</div></div>
         <div><div class="an-h">Top spend</div><div class="vlist">${vend||'<span style="color:var(--faint);font-size:12px">\u2014</span>'}</div></div>
       </div>
     </div>
-    <div class="panel"><div class="phead"><h3>What I found in your data</h3><span class="meta">I can act on these now</span></div>
+    ${rec>0?`<div class="recov-banner"><div class="rb-l"><div class="rb-k">&#9889; Autonomous Recovery</div><div class="rb-t">I can recover <b>${money(rec)}</b> from this file</div><div class="rb-s">Approve a recovery below and I execute it for you, end to end. Recovery is included in your subscription &mdash; when I recover money, my commission is just 8% of it.</div></div><div class="rb-r"><div class="rb-amt">${money(rec)}</div><div class="rb-lab">recoverable now</div></div></div>`:''}
+    <div class="panel"><div class="phead"><h3>Money I can recover</h3><span class="meta">Approve &amp; I recover it for you</span></div>
       <div style="padding:6px 14px 14px">${fnd}</div></div>`;
-  el.querySelectorAll('[data-fx-go]').forEach(b=>b.onclick=()=>{const i=+b.dataset.fxGo;runRemediation('fx'+i,ANALYSIS_FINDINGS[i],el.querySelector(`[data-fx="${i}"]`),(ANALYSIS_FINDINGS[i].impactCents||0)/100);});
+  el.querySelectorAll('[data-fx-go]').forEach(b=>b.onclick=()=>{const i=+b.dataset.fxGo;const f=ANALYSIS_FINDINGS[i];const card=el.querySelector(`[data-fx="${i}"]`);if(liveMode()&&!isDemo()&&f&&f.serverId){executeRecovery(f,card);}else{runRemediation('fx'+i,f,card,(f.impactCents||0)/100);}});
   const recoverable=r.findings.reduce((s,f)=>s+(f.impactCents||0),0)/100;
-  addOp('flag',`Analyzed <b>${esc(name)}</b> \u2014 ${r.count} transactions, ${r.findings.length} issue${r.findings.length===1?'':'s'}${recoverable?`, <span class="amt">${money(recoverable)}</span> recoverable`:''}.`,'Analysis');
+  if(!quiet){addOp('flag',`Analyzed <b>${esc(name)}</b> \u2014 ${r.count} transactions, ${r.findings.length} issue${r.findings.length===1?'':'s'}${recoverable?`, <span class="amt">${money(recoverable)}</span> recoverable`:''}.`,'Analysis');
   toast(`Analyzed <b>${esc(name)}</b>. ${r.findings.length} issue${r.findings.length===1?'':'s'} you can act on.`);
-  el.scrollIntoView({behavior:'smooth',block:'start'});
+  ingestFindings(ANALYSIS_FINDINGS);
+  el.scrollIntoView({behavior:'smooth',block:'start'});}
 }
 
 

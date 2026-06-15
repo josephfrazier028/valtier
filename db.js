@@ -69,6 +69,25 @@ function init() {
     id INTEGER PRIMARY KEY AUTOINCREMENT, company_id TEXT, user_id TEXT,
     action TEXT, meta TEXT, ip TEXT, at INTEGER
   );
+  -- live bank/fintech connections (Plaid) — access tokens stored encrypted
+  CREATE TABLE IF NOT EXISTS bank_links (
+    id TEXT PRIMARY KEY, company_id TEXT REFERENCES companies(id),
+    institution TEXT, access_token_enc TEXT, item_id TEXT, currency TEXT,
+    status TEXT DEFAULT 'active', created_at INTEGER
+  );
+  -- outcome billing: what we charged as a share of recovered money
+  CREATE TABLE IF NOT EXISTS recovery_invoices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, company_id TEXT REFERENCES companies(id),
+    recovered_cents INTEGER, fee_cents INTEGER, currency TEXT,
+    stripe_invoice_id TEXT, period_end INTEGER, created_at INTEGER
+  );
+  -- action executor: an approved recovery moving through its lifecycle, with the artifact + audit
+  CREATE TABLE IF NOT EXISTS actions (
+    id TEXT PRIMARY KEY, company_id TEXT REFERENCES companies(id), finding_id TEXT,
+    type TEXT, status TEXT DEFAULT 'awaiting_confirmation', amount_cents INTEGER,
+    currency TEXT, summary TEXT, artifact_enc TEXT,
+    created_at INTEGER, updated_at INTEGER, executed_at INTEGER
+  );
   `);
 }
 init();

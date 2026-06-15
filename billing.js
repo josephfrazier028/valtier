@@ -136,4 +136,41 @@ function webhook(req, res) {
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e; }
 
-module.exports = { createCheckout, createPortal, webhook, ensureCatalog };
+/* ---------- OUTCOME BILLING: "you only pay a share of what we recover" ---------- */
+const RECOVERY_FEE_PCT = Math.max(0, Math.min(1, parseFloat(process.env.RECOVERY_FEE_PCT || '0.08')));
+
+function recoverySummary(req, res) {
+  const recovered = db.prepare('SELECT COALESCE(SUM(amount_cents),0) c FROM savings_ledger WHERE company_id=?').get(req.user.companyId).c;
+  const billed = db.prepare('SELECT COALESCE(SUM(recovered_cents),0) c FROM recovery_invoices WHERE company_id=?').get(req.user.companyId).c;
+  const unbilled = Math.max(0, recovered - billed);
+  res.json({ recoveredCents: recovered, billedCents: billed, unbilledCents: unbilled,
+    feePct: RECOVERY_FEE_PCT, feeDueCents: Math.round(unbilled * RECOVERY_FEE_PCT) });
+}
+
+// Bill our share of newly-recovered money. Creates a Stripe invoice when configured; always records the ledger entry.
+async function invoiceRecovery(req, res, next) {
+  try {
+    const s = getStripe();
+    const recovered = db.prepare('SELECT COALESCE(SUM(amount_cents),0) c FROM savings_ledger WHERE company_id=?').get(req.user.companyId).c;
+    const billed = db.prepare('SELECT COALESCE(SUM(recovered_cents),0) c FROM recovery_invoices WHERE company_id=?').get(req.user.companyId).c;
+    const unbilled = Math.max(0, recovered - billed);
+    const fee = Math.round(unbilled * RECOVERY_FEE_PCT);
+    if (fee <= 0) return res.json({ ok: true, nothingToBill: true, unbilledCents: unbilled });
+    const currency = ((req.body && req.body.currency) || 'USD').toUpperCase();
+    let invoiceId = null;
+    if (s) {
+      const sub = db.prepare('SELECT stripe_customer_id FROM subscriptions WHERE company_id=?').get(req.user.companyId);
+      if (sub && sub.stripe_customer_id) {
+        await s.invoiceItems.create({ customer: sub.stripe_customer_id, amount: fee, currency: currency.toLowerCase(),
+          description: 'Valtier recovery commission — ' + Math.round(RECOVERY_FEE_PCT * 100) + '% of ' + (unbilled / 100).toFixed(2) + ' ' + currency + ' recovered' });
+        const inv = await s.invoices.create({ customer: sub.stripe_customer_id, auto_advance: true });
+        invoiceId = inv.id;
+      }
+    }
+    db.prepare('INSERT INTO recovery_invoices (company_id,recovered_cents,fee_cents,currency,stripe_invoice_id,period_end,created_at) VALUES (?,?,?,?,?,?,?)')
+      .run(req.user.companyId, unbilled, fee, currency, invoiceId, Date.now(), Date.now());
+    res.json({ ok: true, recoveredCents: unbilled, feeCents: fee, feePct: RECOVERY_FEE_PCT, currency, stripeInvoiceId: invoiceId, live: !!s });
+  } catch (e) { next(e); }
+}
+
+module.exports = { createCheckout, createPortal, webhook, ensureCatalog, recoverySummary, invoiceRecovery };

@@ -27,3 +27,15 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # --- live bank connections (optional; leave blank to disable) ---
+      - key: PLAID_CLIENT_ID
+        sync: false
+      - key: PLAID_SECRET
+        sync: false
+      - key: PLAID_ENV
+        value: sandbox
+      - key: PLAID_COUNTRY_CODES
+        value: US,GB,CA,IE,FR,ES,NL,DE
+      # --- outcome billing: our share of recovered money ---
+      - key: RECOVERY_FEE_PCT
+        value: "0.08"
